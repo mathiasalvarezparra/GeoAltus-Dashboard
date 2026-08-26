@@ -380,7 +380,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
   /* Topbar */
   .topbar{padding:0 12px;height:52px;}
   .tb-sub{display:none;}
-  .btn-ghost.btn-sm:not(#theme-toggle-btn){display:none;}
+  .tb-right .btn-ghost.btn-sm{display:none;}
   .mobile-menu-btn{display:flex!important;}
   .month-label{min-width:72px;font-size:11px;}
   /* Vista */
