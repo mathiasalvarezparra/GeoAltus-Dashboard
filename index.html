@@ -467,7 +467,13 @@
     <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);font-weight:700;margin:18px 0 10px">Cargo y Remuneración</div>
     <div class="form-grid">
       <div class="form-group"><label class="form-label">Cargo</label><input class="form-input" id="trab-cargo" placeholder="Geomensor, Piloto Drone..."></div>
-      <div class="form-group"><label class="form-label">Sueldo Bruto ($)</label><input class="form-input" type="number" id="trab-sueldo" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">Tipo de sueldo ingresado</label><select class="form-input" id="trab-sueldo-tipo" onchange="onSueldoTipoChange()">
+        <option value="bruto">Sueldo Bruto</option>
+        <option value="liquido">Sueldo Líquido</option>
+      </select></div>
+      <div class="form-group"><label class="form-label" id="trab-sueldo-label">Sueldo Bruto ($)</label><input class="form-input" type="number" id="trab-sueldo" placeholder="0" oninput="updateSueldoPreview()">
+        <div class="form-note" id="trab-sueldo-preview"></div>
+      </div>
       <div class="form-group"><label class="form-label">Bono movilización ($)</label><input class="form-input" type="number" id="trab-bono-mov" placeholder="0"></div>
       <div class="form-group"><label class="form-label">Bono colación ($)</label><input class="form-input" type="number" id="trab-bono-col" placeholder="0"></div>
       <div class="form-group"><label class="form-label">AFP</label><select class="form-input" id="trab-afp" onchange="onAfpChange()">
@@ -487,7 +493,7 @@
 
     <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);font-weight:700;margin:18px 0 10px">Contrato</div>
     <div class="form-grid">
-      <div class="form-group"><label class="form-label">Tipo de contrato</label><select class="form-input" id="trab-tipo-contrato">
+      <div class="form-group"><label class="form-label">Tipo de contrato</label><select class="form-input" id="trab-tipo-contrato" onchange="updateSueldoPreview()">
         <option value="indefinido">Indefinido</option>
         <option value="plazo_fijo">Plazo fijo</option>
         <option value="obra_faena">Por obra o faena</option>

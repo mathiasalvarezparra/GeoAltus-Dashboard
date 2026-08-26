@@ -610,7 +610,7 @@ function toggleEstadoLiq(mesKey,trabId){
 }
 
 // MODAL TRABAJADOR
-var TRAB_FIELDS=['nombre','rut','nacimiento','nacionalidad','civil','domicilio','email','telefono','cargo','sueldo','bono-mov','bono-col','afp','salud','tipo-contrato','fecha','fecha-termino','lugar','jornada','obra','banco','tipo-cuenta','n-cuenta','estado'];
+var TRAB_FIELDS=['nombre','rut','nacimiento','nacionalidad','civil','domicilio','email','telefono','cargo','sueldo-tipo','sueldo','bono-mov','bono-col','afp','salud','tipo-contrato','fecha','fecha-termino','lugar','jornada','obra','banco','tipo-cuenta','n-cuenta','estado'];
 function limpiarCamposTrab(){TRAB_FIELDS.forEach(f=>{var el=document.getElementById('trab-'+f);if(el){if(el.tagName==='SELECT')el.selectedIndex=0;else el.value='';}});}
 function openModalTrab(){
   editTrabId=null;
@@ -620,6 +620,7 @@ function openModalTrab(){
   document.getElementById('trab-jornada').value='Lunes a viernes, 08:30–17:30';
   document.getElementById('trab-estado').value='activo';
   document.getElementById('trab-tipo-contrato').value='indefinido';
+  onSueldoTipoChange();
   document.getElementById('modal-trab').classList.add('open');
 }
 function editarTrab(id){
@@ -630,7 +631,10 @@ function editarTrab(id){
   setV('nombre',t.nombre);setV('rut',t.rut);setV('nacimiento',t.nacimiento);
   setV('nacionalidad',t.nacionalidad||'Chilena');setV('civil',t.civil||'soltero/a');
   setV('domicilio',t.domicilio);setV('email',t.email);setV('telefono',t.telefono);
-  setV('cargo',t.cargo);setV('sueldo',t.sueldo);
+  setV('cargo',t.cargo);
+  var sueldoTipoSel=document.getElementById('trab-sueldo-tipo');
+  if(sueldoTipoSel)sueldoTipoSel.value='bruto'; // t.sueldo siempre se guarda en bruto
+  setV('sueldo',t.sueldo);
   setV('bono-mov',t.bonoMov);setV('bono-col',t.bonoCol);
   // AFP: si tenemos afpNombre, seleccionar esa opción exacta; si no, hacer match por tasa
   var afpSel=document.getElementById('trab-afp');
@@ -654,6 +658,7 @@ function editarTrab(id){
   setV('lugar',t.lugar);setV('jornada',t.jornada||'Lunes a viernes, 08:30–17:30');
   setV('obra',t.obra);setV('banco',t.banco);setV('tipo-cuenta',t.tipoCuenta);
   setV('n-cuenta',t.nCuenta);setV('estado',t.estado||'activo');
+  onSueldoTipoChange();
   document.getElementById('modal-trab').classList.add('open');
 }
 function closeModalTrab(){document.getElementById('modal-trab').classList.remove('open');}
@@ -662,7 +667,42 @@ function onAfpChange(){
   var sel=document.getElementById('trab-afp');
   if(!sel) return;
   var opt=sel.options[sel.selectedIndex];
-  // Se usa al guardar — nada que renderizar por ahora
+  // Se usa al guardar
+  updateSueldoPreview();
+}
+// Busca por búsqueda binaria el sueldo bruto que produce el líquido objetivo (calcLiqData no es invertible en forma cerrada por los tramos de impuesto)
+function liquidoABruto(liquidoObjetivo,afpTasa,tipoContrato){
+  if(liquidoObjetivo<=0)return 0;
+  var lo=0,hi=liquidoObjetivo*2;
+  while(calcLiqData(hi,afpTasa,30,'completo',tipoContrato).liquido<liquidoObjetivo && hi<1e9){hi*=2;}
+  for(var i=0;i<50;i++){
+    var mid=(lo+hi)/2;
+    var liq=calcLiqData(mid,afpTasa,30,'completo',tipoContrato).liquido;
+    if(liq<liquidoObjetivo)lo=mid;else hi=mid;
+  }
+  return Math.round((lo+hi)/2);
+}
+function onSueldoTipoChange(){
+  var tipo=document.getElementById('trab-sueldo-tipo')?.value||'bruto';
+  var label=document.getElementById('trab-sueldo-label');
+  if(label)label.textContent=tipo==='liquido'?'Sueldo Líquido ($)':'Sueldo Bruto ($)';
+  updateSueldoPreview();
+}
+function updateSueldoPreview(){
+  var prev=document.getElementById('trab-sueldo-preview');
+  if(!prev)return;
+  var val=parseFloat(document.getElementById('trab-sueldo').value)||0;
+  if(!val){prev.textContent='';return;}
+  var tipo=document.getElementById('trab-sueldo-tipo')?.value||'bruto';
+  var afpTasa=parseFloat(document.getElementById('trab-afp').value)||10.46;
+  var tipoContrato=document.getElementById('trab-tipo-contrato')?.value||'indefinido';
+  if(tipo==='liquido'){
+    var bruto=liquidoABruto(val,afpTasa,tipoContrato);
+    prev.textContent='≈ '+fmt(bruto)+' bruto mensual (aproximado)';
+  }else{
+    var liq=calcLiqData(val,afpTasa,30,'completo',tipoContrato).liquido;
+    prev.textContent='≈ '+fmt(liq)+' líquido mensual (aproximado)';
+  }
 }
 function getAfpNombreActual(){
   var sel=document.getElementById('trab-afp');
@@ -674,19 +714,25 @@ function guardarTrabajador(){
   var nombre=document.getElementById('trab-nombre').value.trim();
   if(!validateForm([{id:'trab-nombre'}]))return;
   var getV=(f)=>{var el=document.getElementById('trab-'+f);return el?el.value.trim():'';};
+  var afpTasaForm=parseFloat(document.getElementById('trab-afp').value)||10.46;
+  var tipoContratoForm=getV('tipo-contrato')||'indefinido';
+  var sueldoInput=parseFloat(document.getElementById('trab-sueldo').value)||0;
+  var sueldoTipo=document.getElementById('trab-sueldo-tipo')?.value||'bruto';
+  // El sistema siempre calcula desde el bruto; si el usuario ingresó el líquido, se convierte antes de guardar
+  var sueldoBruto=sueldoTipo==='liquido'?liquidoABruto(sueldoInput,afpTasaForm,tipoContratoForm):sueldoInput;
   var datos={
     nombre,rut:getV('rut'),
     nacimiento:getV('nacimiento'),nacionalidad:getV('nacionalidad')||'Chilena',
     civil:getV('civil')||'soltero/a',domicilio:getV('domicilio'),
     email:getV('email'),telefono:getV('telefono'),
     cargo:getV('cargo'),
-    sueldo:parseFloat(document.getElementById('trab-sueldo').value)||0,
+    sueldo:sueldoBruto,
     bonoMov:parseFloat(document.getElementById('trab-bono-mov').value)||0,
     bonoCol:parseFloat(document.getElementById('trab-bono-col').value)||0,
-    afp:parseFloat(document.getElementById('trab-afp').value)||10.46,
+    afp:afpTasaForm,
     afpNombre:getAfpNombreActual(),
     salud:getV('salud')||'fonasa',
-    tipoContrato:getV('tipo-contrato')||'indefinido',
+    tipoContrato:tipoContratoForm,
     fechaContrato:getV('fecha'),fechaTermino:getV('fecha-termino'),
     lugar:getV('lugar'),jornada:getV('jornada'),obra:getV('obra'),
     banco:getV('banco'),tipoCuenta:getV('tipo-cuenta'),nCuenta:getV('n-cuenta'),
