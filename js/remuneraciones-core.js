@@ -349,7 +349,12 @@ function calcLiquidacion(){
   var contratoLbl=t.tipoContrato==='plazo_fijo'?'Plazo fijo':(t.tipoContrato==='obra_faena'?'Obra o faena':'Indefinido');
 
   document.getElementById('liq-nombre-titulo').textContent=t.nombre;
-  document.getElementById('liq-cargo-titulo').textContent=t.cargo+' · '+afpNombreTxt+' · '+saludLblCorto+' · '+contratoLbl;
+  var contratoBadge='';
+  if(t.contratoInfo&&t.contratoInfo.fechaInicio){
+    var ficFmt=t.contratoInfo.fechaInicio.split('-').reverse().join('/');
+    contratoBadge=` · <span class="badge bgo" style="cursor:pointer" onclick="openModalContrato(${t.id})" title="Ver/regenerar contrato">📄 PDF · ${ficFmt}</span>`;
+  }
+  document.getElementById('liq-cargo-titulo').innerHTML=t.cargo+' · '+afpNombreTxt+' · '+saludLblCorto+' · '+contratoLbl+contratoBadge;
   document.getElementById('liq-mes-badge').textContent=MESES[currentMonth]+' '+currentYear;
 
   // Ausentismo resumen

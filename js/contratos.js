@@ -227,6 +227,12 @@ ${clausulaExtra?`<p class="clausula"><strong class="titulo">Décimo Tercero:</st
   if(!w){toast('⚠ Habilita las ventanas emergentes para descargar el contrato','warn');return;}
   w.document.write(html);w.document.close();
   setTimeout(()=>w.print(),600);
+
+  // Registra que el contrato fue generado — se muestra como badge junto al tipo de contrato
+  t.contratoInfo={fechaInicio,tipo,generadoEl:hoy.toISOString()};
+  saveAllData();
+  if(typeof calcLiquidacion==='function'&&trabSeleccionado===t.id)calcLiquidacion();
+
   closeModalContrato();
   toast('✓ Contrato generado para '+t.nombre,'ok');
 }
