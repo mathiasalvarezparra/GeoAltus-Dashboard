@@ -380,9 +380,17 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
   /* Topbar */
   .topbar{padding:0 12px;height:52px;}
   .tb-sub{display:none;}
-  .btn-ghost.btn-sm:not(#theme-toggle-btn){display:none;}
+  .tb-right .btn-ghost.btn-sm{display:none;}
   .mobile-menu-btn{display:flex!important;}
-  .month-label{min-width:72px;font-size:11px;}
+  .month-label{min-width:56px;font-size:11px;}
+  /* El botón de acción de la topbar (+ Nuevo Cliente, + Nueva Cotización, etc.) y el selector de
+     mes competían por espacio con el título y se salían de la pantalla en textos largos. */
+  .tb-left{min-width:0;overflow:hidden;}
+  .tb-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .tb-right{gap:4px;}
+  .month-nav{padding:3px 4px;}
+  .month-btn{width:22px;height:22px;}
+  .tb-right .btn-gold.btn-sm{padding:6px 9px;font-size:11px;max-width:128px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   /* Vista */
   .view{padding:14px 12px 60px;}
   /* KPIs 2 columnas */
@@ -391,7 +399,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
   .kpi-ico{display:none;}
   /* Grids a 1 columna */
   .g2,.g3,.g21,.libro-layout{grid-template-columns:1fr;}
+  /* Sin esto, un hijo ancho (tabla, panel) fuerza el track de la grilla más allá del viewport
+     y el contenido queda recortado en vez de scrollear — permite que cada hijo se achique
+     al ancho real de pantalla para que su propio overflow-x:auto interno funcione. */
+  .g2>*,.g3>*,.g21>*,.libro-layout>*,.rem-layout>*{min-width:0;}
   .donuts-row{grid-template-columns:1fr 1fr;}
+  .donuts-row>*{min-width:0;}
+  .hist-cards{grid-template-columns:1fr 1fr;}
+  /* Mapa de calor anual (Estadísticas): 12 columnas fijas por estilo inline — se sobrescribe con
+     !important porque un estilo inline tiene más especificidad que una regla de hoja de estilos. */
+  #stats-heat>div{grid-template-columns:repeat(6,1fr)!important;}
   /* Formularios */
   .form-grid{grid-template-columns:1fr;}
   .fg-full{grid-column:1;}
