@@ -234,18 +234,31 @@ function renderF22(ppmTasa,usaPPM){
     </div>`;
 }
 
+// Genera dinámicamente los próximos vencimientos desde la fecha real de hoy — evita que el
+// calendario quede fijo en fechas de un año/mes específico y termine mostrando plazos vencidos.
+// F29: día 12 (no facturador electrónico) o día 20 (facturador electrónico) del mes siguiente al declarado.
+// Cotizaciones previsionales: día 10 (declaración) / día 13 (pago vía PreviRed por internet) del mes siguiente.
+// Fuente: Superintendencia de Pensiones (spensiones.cl) y SII (calendario tributario).
 function renderCalendario(){
-  var eventos=[
-    {mes:'Mayo 2026',tipo:'F29 Abril 2026',fecha:'12 Mayo 2026',dias:diasHasta(12,1)},
-    {mes:'Mayo 2026',tipo:'Cotizaciones Abril',fecha:'30 Abril 2026',dias:diasHasta(30,0)},
-    {mes:'Jun 2026',tipo:'F29 Mayo 2026',fecha:'12 Jun 2026',dias:diasHasta(12,2)},
-    {mes:'Jun 2026',tipo:'Cotizaciones Mayo',fecha:'31 May 2026',dias:diasHasta(31,1)},
-    {mes:'Jul 2026',tipo:'F29 Junio 2026',fecha:'12 Jul 2026',dias:diasHasta(12,3)},
-    {mes:'Jul 2026',tipo:'Cotizaciones Junio',fecha:'30 Jun 2026',dias:diasHasta(30,2)},
-    {mes:'Ago 2026',tipo:'F29 Julio 2026',fecha:'12 Ago 2026',dias:diasHasta(12,4)},
-    {mes:'Mar 2027',tipo:'DJ 1879 Honorarios',fecha:'Marzo 2027',dias:300},
-    {mes:'Abr 2027',tipo:'F22 Año 2026',fecha:'Abril 2027',dias:365},
-  ];
+  var hoy=new Date();hoy.setHours(0,0,0,0);
+  var diaF29=preferencias.facturaElectronica===false?12:20;
+  var eventos=[];
+  for(var i=0;i<3;i++){
+    var fF29=new Date(hoy.getFullYear(),hoy.getMonth()+i,diaF29);
+    var mesDeclF29=new Date(fF29.getFullYear(),fF29.getMonth()-1,1);
+    eventos.push({mes:MESES[fF29.getMonth()]+' '+fF29.getFullYear(),tipo:'F29 '+MESES[mesDeclF29.getMonth()]+' '+mesDeclF29.getFullYear(),fecha:diaF29+' '+MESES[fF29.getMonth()]+' '+fF29.getFullYear(),dias:Math.round((fF29-hoy)/86400000)});
+    var fCot=new Date(hoy.getFullYear(),hoy.getMonth()+i,13);
+    var mesDeclCot=new Date(fCot.getFullYear(),fCot.getMonth()-1,1);
+    eventos.push({mes:MESES[fCot.getMonth()]+' '+fCot.getFullYear(),tipo:'Cotizaciones '+MESES[mesDeclCot.getMonth()]+' (PreviRed)',fecha:'13 '+MESES[fCot.getMonth()]+' '+fCot.getFullYear(),dias:Math.round((fCot-hoy)/86400000)});
+  }
+  eventos=eventos.filter(e=>e.dias>=0).sort((a,b)=>a.dias-b.dias).slice(0,5);
+  // Obligaciones anuales — la fecha exacta (día) la fija el SII cada año; se muestra a nivel de mes
+  var anioDJ=hoy.getMonth()<2?hoy.getFullYear():hoy.getFullYear()+1;
+  var anioF22=anioDJ;
+  var anioTributario=anioDJ-1;
+  var fDJ=new Date(anioDJ,2,15),fF22=new Date(anioF22,3,15);
+  eventos.push({mes:'Mar '+anioDJ,tipo:'DJ 1879 Honorarios '+anioTributario,fecha:'Marzo '+anioDJ,dias:Math.round((fDJ-hoy)/86400000)});
+  eventos.push({mes:'Abr '+anioF22,tipo:'F22 Año '+anioTributario,fecha:'Abril '+anioF22,dias:Math.round((fF22-hoy)/86400000)});
   var color=d=>d<=7?'var(--red)':d<=20?'var(--amber)':d<=60?'var(--gold)':'var(--text3)';
   document.getElementById('cal-grid').innerHTML=eventos.map(e=>`<div class="cal-item"><div class="cal-mes">${e.mes}</div><div class="cal-tipo">${e.tipo}</div><div class="cal-fecha">${e.fecha}</div><div class="cal-days" style="color:${color(e.dias)}">${e.dias}</div><div class="cal-days-lbl">días restantes</div></div>`).join('');
 }

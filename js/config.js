@@ -25,6 +25,7 @@ function renderConfigView(){
   // Preferencias
   setV('cfg-pref-tema',preferencias.tema||'dark');
   setV('cfg-pref-mes-fiscal',preferencias.mesFiscal||0);
+  setV('cfg-pref-factura-electronica',preferencias.facturaElectronica===false?'no':'si');
   setV('cfg-pref-notas',preferencias.notas||'');
   // KPIs
   document.getElementById('cfg-kpi-empresa').textContent=c.razonSocial||'—';
@@ -95,9 +96,11 @@ function restaurarConfigDefault(){
 function guardarPreferencias(){
   preferencias.tema=document.getElementById('cfg-pref-tema').value;
   preferencias.mesFiscal=parseInt(document.getElementById('cfg-pref-mes-fiscal').value)||0;
+  preferencias.facturaElectronica=document.getElementById('cfg-pref-factura-electronica').value!=='no';
   preferencias.notas=document.getElementById('cfg-pref-notas').value;
   saveAllData();
   toast('✓ Preferencias guardadas','ok');
+  if(document.getElementById('cal-grid'))renderCalendario();
 }
 
 function cambiarTemaConfig(v){

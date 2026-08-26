@@ -283,7 +283,7 @@
 
     <!-- BLOQUE 4: Calendario Tributario -->
     <div class="f29-section">
-      <div class="f29-section-title">Calendario Tributario 2026</div>
+      <div class="f29-section-title">Calendario Tributario</div>
       <div class="cal-grid" id="cal-grid"></div>
     </div>
 
@@ -399,8 +399,8 @@
           <div class="previred-card"><div class="previred-label" id="prev-salud-label">Fonasa (trabajador)</div><div class="previred-val" id="prev-salud" style="color:var(--teal)">—</div><div class="previred-sub">7% sueldo bruto</div></div>
           <div class="previred-card"><div class="previred-label">Seg. Cesantía trabajador</div><div class="previred-val" id="prev-ces-t" style="color:var(--amber)">—</div><div class="previred-sub" id="prev-ces-t-sub">0.6% sueldo bruto</div></div>
           <div class="previred-card"><div class="previred-label">Seg. Cesantía empleador</div><div class="previred-val" id="prev-ces-e" style="color:var(--amber)">—</div><div class="previred-sub" id="prev-ces-e-sub">2.4% · Cargo GeoAltus</div></div>
-          <div class="previred-card"><div class="previred-label">SIS (empleador)</div><div class="previred-val" id="prev-sis" style="color:var(--purple)">—</div><div class="previred-sub">1.54% · Cargo GeoAltus</div></div>
-          <div class="previred-card"><div class="previred-label">Reforma Ley 21.735</div><div class="previred-val" id="prev-reforma" style="color:var(--purple)">—</div><div class="previred-sub">1% · Cargo GeoAltus</div></div>
+          <div class="previred-card"><div class="previred-label">SIS (empleador)</div><div class="previred-val" id="prev-sis" style="color:var(--purple)">—</div><div class="previred-sub" id="prev-sis-sub">1.54% · Cargo GeoAltus</div></div>
+          <div class="previred-card"><div class="previred-label">Reforma Ley 21.735</div><div class="previred-val" id="prev-reforma" style="color:var(--purple)">—</div><div class="previred-sub" id="prev-reforma-sub">1% · Cargo GeoAltus</div></div>
           <div class="previred-card" style="background:var(--gold-dim);border-color:rgba(233,185,73,.25)"><div class="previred-label" style="color:var(--gold)">Total PreviRed</div><div class="previred-val" id="prev-total" style="color:var(--gold)">—</div><div class="previred-sub" style="color:var(--gold);opacity:.7">Todos los conceptos</div></div>
         </div>
         <div class="alert ai">
@@ -971,6 +971,12 @@
       <div class="form-group"><label class="form-label">Mes inicio año fiscal</label><select class="form-input" id="cfg-pref-mes-fiscal">
         <option value="0">Enero (estándar Chile)</option><option value="6">Julio</option>
       </select></div>
+      <div class="form-group"><label class="form-label">Tipo de facturación</label><select class="form-input" id="cfg-pref-factura-electronica">
+        <option value="si">Electrónica (plazo F29: día 20)</option>
+        <option value="no">Manual/papel (plazo F29: día 12)</option>
+      </select>
+        <div class="form-note">Define la fecha límite F29 mostrada en el calendario tributario</div>
+      </div>
       <div class="form-group fg-full"><label class="form-label">Notas internas (uso personal)</label><textarea class="form-input" id="cfg-pref-notas" rows="3" placeholder="Notas, claves SII, recordatorios..."></textarea></div>
     </div>
     <div style="margin-top:12px"><button class="btn btn-gold btn-sm" onclick="guardarPreferencias()">💾 Guardar Preferencias</button></div>

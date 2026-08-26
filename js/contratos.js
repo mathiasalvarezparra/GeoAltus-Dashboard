@@ -28,7 +28,7 @@ var EMPLEADOR_CONTRATO=configEmpleador;
 var plantillasCotizacion=[];
 
 // Preferencias del sistema
-var preferencias={tema:'dark',mesFiscal:0,notas:'',valoresMensuales:{},viabParams:{}};
+var preferencias={tema:'dark',mesFiscal:0,facturaElectronica:true,notas:'',valoresMensuales:{},viabParams:{}};
 
 function openModalContrato(trabId){
   var t=trabajadores.find(x=>x.id===trabId);

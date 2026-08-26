@@ -25,8 +25,19 @@ const TASA_SALUD = 0.07;
 const TASA_CES_T_INDEF = 0.006;   // Trabajador contrato indefinido
 const TASA_CES_E_INDEF = 0.024;   // Empleador contrato indefinido
 const TASA_CES_E_PLAZO = 0.03;    // Empleador contrato plazo fijo/obra (trabajador 0%)
-const TASA_SIS = 0.0154;          // Enero 2026 (baja a 1.50% desde agosto 2026)
-const TASA_REFORMA_EMP = 0.01;    // Aporte empleador Ley 21.735 (ago/25 – jul/26)
+// Ley 21.735 (Reforma Previsional): cronograma de la cotización adicional de cargo del empleador.
+// Ago/2025–jul/2026: aporte reforma 1% + SIS 1,54% cobrado aparte (esquema anterior).
+// Desde ago/2026: el SIS deja de cobrarse por separado — queda incorporado en el nuevo aporte
+// patronal de 3,5% (2,5% Seguro Social que incluye el SIS, 0,9% CRP, 0,1% capitalización individual),
+// vigente hasta jul/2027. El cronograma sigue subiendo por etapas hasta 8,5% en 2033; actualizar el
+// siguiente tramo cuando la Superintendencia de Pensiones confirme la fecha y tasa exactas.
+// Fuentes: hacienda.cl y aafp.cl (implementación reforma previsional, ago-2026).
+function getAportesEmpleador(anio,mes){
+  var periodo=anio*12+mes;          // mes: 0=enero
+  var inicioTramo2=2026*12+7;       // agosto 2026
+  if(periodo>=inicioTramo2) return {sis:0, reforma:0.035};
+  return {sis:0.0154, reforma:0.01};
+}
 
 // Tabla precargada de valores mensuales 2026
 // UTM: valor oficial del SII (derivado de la tabla IUSC · tramo exento ÷ 13,5)
@@ -372,6 +383,12 @@ function calcLiquidacion(){
     ? {clase:'liq-desc',label:'Seguro Cesantía trabajador (0.6%)',nota:'AFC Chile',val:'−'+fmt(d.cesT),color:'var(--red)'}
     : {clase:'',label:'Seguro Cesantía trabajador',nota:`No aplica en contrato ${contratoLbl.toLowerCase()} — 100% cargo empleador`,val:'$0',color:'var(--text3)'};
 
+  // Nota de aportes patronales (SIS + Ley 21.735) — el desglose cambia según el período (ver getAportesEmpleador)
+  var aportesEmpNota=getAportesEmpleador(currentYear,currentMonth);
+  var notaAportesEmp=aportesEmpNota.sis>0
+    ?` + SIS (${(aportesEmpNota.sis*100).toFixed(2)}%) + Reforma Ley 21.735 (${(aportesEmpNota.reforma*100).toFixed(1)}%)`
+    :` + Aporte Ley 21.735 (${(aportesEmpNota.reforma*100).toFixed(1)}%, incluye SIS)`;
+
   // Render filas
   var cont=document.getElementById('liq-rows-container');
   var rows=[
@@ -387,7 +404,7 @@ function calcLiquidacion(){
     {divider:true},
     {clase:'liq-total-liq',label:'▶ SUELDO LÍQUIDO',nota:'Lo que recibe el trabajador',val:fmt(d.liquido),color:'var(--green)'},
     {divider:true},
-    {clase:'liq-costo-emp',label:'▶ Costo total GeoAltus (solo referencia interna)',nota:`Bruto + Cesantía emp. (${t.tipoContrato==='indefinido'?'2.4%':'3%'}) + SIS (1.54%) + Reforma Ley 21.735 (1%) — no aparece en PDF`,val:fmt(brutoRemunerado+d.cesE+d.sis+d.aporteReforma),color:'var(--gold)'},
+    {clase:'liq-costo-emp',label:'▶ Costo total GeoAltus (solo referencia interna)',nota:`Bruto + Cesantía emp. (${t.tipoContrato==='indefinido'?'2.4%':'3%'})${notaAportesEmp} — no aparece en PDF`,val:fmt(brutoRemunerado+d.cesE+d.sis+d.aporteReforma),color:'var(--gold)'},
   ];
   cont.innerHTML='<div class="liq-rows">'+rows.map(r=>{
     if(r.divider) return '<div class="liq-divider"></div>';
@@ -408,6 +425,10 @@ function calcLiquidacion(){
   document.getElementById('prev-sis').textContent=fmt(d.sis);
   var prevReformaEl=document.getElementById('prev-reforma');
   if(prevReformaEl) prevReformaEl.textContent=fmt(d.aporteReforma);
+  var prevSisSub=document.getElementById('prev-sis-sub');
+  if(prevSisSub) prevSisSub.textContent=aportesEmpNota.sis>0?(aportesEmpNota.sis*100).toFixed(2)+'% · Cargo GeoAltus':'Incorporado en Reforma desde ago/2026';
+  var prevReformaSub=document.getElementById('prev-reforma-sub');
+  if(prevReformaSub) prevReformaSub.textContent=(aportesEmpNota.reforma*100).toFixed(1)+'% · Cargo GeoAltus'+(aportesEmpNota.sis===0?' (incluye SIS)':'');
   // Etiquetas dinámicas en las cards PreviRed
   var prevAfpLbl=document.getElementById('prev-afp-trab-label');
   if(prevAfpLbl) prevAfpLbl.textContent=afpNombreTxt+' (trabajador)';
@@ -507,8 +528,9 @@ function calcLiqData(bruto, afpTasa, dias, tipo, tipoContrato){
   var cesE=(tc==='indefinido')?Math.round(brutoCES*TASA_CES_E_INDEF):Math.round(brutoCES*TASA_CES_E_PLAZO);
 
   // Cotizaciones de cargo del empleador (no descuentan al trabajador)
-  var sis=Math.round(brutoAFP*TASA_SIS);
-  var aporteReforma=Math.round(brutoAFP*TASA_REFORMA_EMP); // Ley 21.735 — 1% patronal
+  var aportesEmp=getAportesEmpleador(currentYear,currentMonth);
+  var sis=Math.round(brutoAFP*aportesEmp.sis);
+  var aporteReforma=Math.round(brutoAFP*aportesEmp.reforma); // Ley 21.735
 
   // Base para Impuesto de Segunda Categoría = bruto proporcional − cotizaciones legales
   // (el topeo se aplicó sólo a los descuentos; la base imponible parte del brutoP real)
